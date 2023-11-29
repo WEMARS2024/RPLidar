@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WEMars Software</title>
+    <style>
+        body {
+            font-family: fantasy;
+            margin: 0;
+            padding: 0;
+            background-color: #9c9c9c;
+            color: #000000;
+        }
+        header, footer {
+            background-color: #a1a1a1;
+            color: #000000;
+            text-align: center;
+            padding: 1em 0;
+        }
+        #radarCanvas {
+            display: block;
+            margin: 2em auto;
+            box-shadow: 0 0 10px rgba(0,0,0,0.5);
+        }
+        section {
+            max-width: 800px;
+            margin: 2em auto;
+            padding: 1em;
+            background: #dfdadada;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        h2 {
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>WEMars 2023</h1>
+    </header>
+
+    <canvas id="radarCanvas" width="1200" height="600"></canvas>
+
+        <!-- Importing Socket.io JavaScript Library -->
+    <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
+
+    
+    <script>
+       // JavaScript code that connects to the server via Socket.io
+        // and handles incoming data for the radar display 
+        var socket = io.connect('http://' + document.domain + ':' + location.port);
+        socket.on('sensor-data', function(data) {
+            console.log(data); // Data received from server should show up in the browser's console
+            updateRadarDisplay(data);
+        });
+
+        function drawRadarGrid(ctx, canvas) {
+      // Radar grid drawing logic
+      const centerX = canvas.width / 2;
+      const centerY = canvas.height / 2;
+      const maxRadius = Math.min(centerX, centerY);
+
+      ctx.save();
+      ctx.translate(centerX, centerY); // Move the origin to the center of the canvas
+
+      // Draw the circles
+      ctx.strokeStyle = 'purple';
+      ctx.lineWidth = 2;
+      for (let i = 1; i <= 5; i++) {
+        ctx.beginPath();
+        ctx.arc(0, 0, (i * maxRadius) / 5, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+
+      // Draw the lines from the center to the edge
+      for (let i = 0; i < 360; i += 15) {
+        const angleInRadians = (i * Math.PI) / 180;
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.lineTo(maxRadius * Math.cos(angleInRadians), maxRadius * Math.sin(angleInRadians));
+        ctx.stroke();
+      }
+
+      ctx.restore(); // Restore the original state
+    }
+
+    function updateRadarDisplay(data) {
+      const canvas = document.getElementById('radarCanvas');
+      if (!canvas) {
+        console.error('No canvas element found');
+        return;
+      }
+
+      const ctx = canvas.getContext('2d');
+      drawRadarGrid(ctx, canvas); // Redrawing the radar grid
+
+      // Logic to calculate position and draw a point based on the received data
+      const angleInRadians = (data.angle * Math.PI) / 180;
+      const distanceScale = Math.min(canvas.width, canvas.height) / 2 / 100;
+      const x = (canvas.width / 2) + data.distance * distanceScale * Math.cos(angleInRadians);
+      const y = (canvas.height / 2) - data.distance * distanceScale * Math.sin(angleInRadians);
+
+      // Draw a point at the calculated (x, y) position
+      ctx.fillStyle = 'red';
+      ctx.beginPath();
+      ctx.arc(x, y, 5, 0, 2 * Math.PI);
+      ctx.fill();
+    }
+
+        // Call drawRadarGrid on initial load to draw the static grid
+        const canvas = document.getElementById('radarCanvas');
+        const ctx = canvas.getContext('2d');
+        drawRadarGrid(ctx, canvas);
+
+    </script>
+
+</body>
+</html>
