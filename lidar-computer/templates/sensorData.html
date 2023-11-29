@@ -69,7 +69,7 @@
       ctx.restore(); // Restore the original state
     }
 
-    function updateRadarDisplay(data) {
+    function updateRadarDisplay(dataDict) {
   const canvas = document.getElementById('radarCanvas');
   if (!canvas) {
     console.error('No canvas element found');
@@ -80,24 +80,27 @@
   ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear the canvas before redrawing
   drawRadarGrid(ctx, canvas); // Redraw the radar grid
 
-  // Validate received data
-  if (typeof data.distance !== 'number' || typeof data.angle !== 'number') {
-    console.error('Invalid data received:', data);
-    return;
+  // Validate and plot new data
+  for (const [deg, dist] of Object.entries(dataDict)) {
+    if (typeof dist !== 'number' || typeof deg !== 'number') {
+      console.error('Invalid data received:', { degree: deg, distance: dist });
+      continue;
+    }
+
+    // Logic to calculate position and draw a point based on the received data
+    const angleInRadians = (deg * Math.PI) / 180;
+    const distanceScale = Math.min(canvas.width, canvas.height) / 2 / 100; // Adjust scale as needed
+    const x = (canvas.width / 2) + dist * distanceScale * Math.cos(angleInRadians);
+    const y = (canvas.height / 2) - dist * distanceScale * Math.sin(angleInRadians);
+
+    // Draw a point at the calculated (x, y) position
+    ctx.fillStyle = 'red';
+    ctx.beginPath();
+    ctx.arc(x, y, 5, 0, 2 * Math.PI);
+    ctx.fill();
   }
-
-      // Logic to calculate position and draw a point based on the received data
-  const angleInRadians = (data.angle * Math.PI) / 180;
-  const distanceScale = Math.min(canvas.width, canvas.height) / 2 / 100; // Adjust scale as needed
-  const x = (canvas.width / 2) + data.distance * distanceScale * Math.cos(angleInRadians);
-  const y = (canvas.height / 2) - data.distance * distanceScale * Math.sin(angleInRadians);
-
-  // Draw a point at the calculated (x, y) position
-  ctx.fillStyle = 'red';
-  ctx.beginPath();
-  ctx.arc(x, y, 5, 0, 2 * Math.PI);
-  ctx.fill();
 }
+
   </script>
 </body>
 </html>

@@ -3,6 +3,7 @@ from flask import Flask, render_template, jsonify
 from flask_socketio import SocketIO, emit
 import random
 import threading
+import socket
 
 # Flask application setup
 app = Flask(__name__)
@@ -33,7 +34,7 @@ path_data = {
 @app.route('/')
 def index():
     # Renders the 'index.html' template when the root URL is accessed
-    return render_template('index.html')
+    return render_template("index.html")
 
 # Define route to get camera feed data
 @app.route('/camera-feeds')
@@ -46,7 +47,7 @@ def get_camera_feeds():
 @app.route('/sensor-data')
 def sensor_data():
    # Renders the 'sensorData.html' template for the radar page
-    return render_template('sensorData.html')
+    return render_template("sensorData.html")
 
 # Define route to get path data
 @app.route('/path-data')
@@ -59,10 +60,48 @@ def get_path_data():
 def send_sensor_data():
     with app.app_context():
         while True:
-            # Simulated sensor data with random values
-            sensor_data = {'distance': random.random() * 100, 'angle': random.random() * 360}
-            socketio.emit('sensor-data', sensor_data)
-            socketio.sleep(1)  # Use socketio.sleep instead of time.sleep
+            # Set up the server socket
+            server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            host = '10.0.0.134'
+            port = 8080
+
+            server_socket.bind((host, port))
+            server_socket.listen(1)
+            print(f"Server listening on {host}:{port}")
+
+            while True:
+                # Accept a client connection
+                client_socket, client_address = server_socket.accept()
+                print(f"Connection from {client_address}")
+
+                # Receive data from the client
+                received_data = client_socket.recv(1024).decode()
+                if not received_data:
+                    print("Refused connection")
+                    continue
+                print(f"Received data from server: {received_data}")
+                
+                try:
+                    data_pairs = received_data.split(';')
+                    data_dict = {}
+
+                    for pair in data_pairs:
+                        if ':' in pair:
+                            deg, dist = pair.split(':')
+                            try:
+                                deg = float(deg)
+                                dist = float(dist)
+                                data_dict[deg] = dist
+                            except ValueError:
+                                print(f"Invalid data pair: {pair}")
+                    print(data_dict)
+                    socketio.emit('sensor-data', data_dict)
+                    socketio.sleep(1)  # Use socketio.sleep instead of time.sleep
+                except ValueError:
+                    print("Error parsing data:", received_data)
+                
+                # Close the connection
+                client_socket.close()
 
 # SocketIO event handlers
 @socketio.on('connect')
