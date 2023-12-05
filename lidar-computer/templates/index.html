@@ -114,8 +114,8 @@
                 // Logic to calculate position and draw a point based on the received data
                 const angleInRadians = (deg * Math.PI) / 180;
                 // const distanceScale = Math.min(canvas.width, canvas.height) / 2 / 100; // Adjust scale as needed
-                const x = (canvas.width / 2) + dist * 5 * Math.cos(angleInRadians);
-                const y = (canvas.height / 2) - dist * 5 * Math.sin(angleInRadians);
+                const x = (canvas.width / 2) + dist * 25 * Math.cos(angleInRadians);
+                const y = (canvas.height / 2) - dist * 25 * Math.sin(angleInRadians);
 
                 // Draw a point at the calculated (x, y) position
                 ctx.fillStyle = 'red';

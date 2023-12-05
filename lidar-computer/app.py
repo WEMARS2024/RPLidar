@@ -72,7 +72,7 @@ def send_sensor_data():
             elif debug == 1:
                 # Set up the server socket
                 server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                host = '172.30.122.204' # wireless LAN adapter
+                host = '172.20.10.2' # wireless LAN adapter
                 port = 8080
 
                 server_socket.bind((host, port))
@@ -105,7 +105,10 @@ def send_sensor_data():
                                 except ValueError:
                                     print(f"Invalid data pair: {pair}")
                         print(data_dict)
-                        socketio.emit('sensor-data', data_dict)
+                        dictLength = len(data_dict)
+                        print(f'length of dict: {dictLength}')
+                        if (dictLength > 100):
+                            socketio.emit('sensor-data', data_dict)
                         socketio.sleep(1)  # Use socketio.sleep instead of time.sleep
                     except ValueError:
                         print("Error parsing data:", received_data)
