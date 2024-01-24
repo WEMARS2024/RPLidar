@@ -10,13 +10,13 @@
             font-family: fantasy;
             margin: 0;
             padding: 0;
-            background-color: #9c9c9c;
+            background-color: #f2f2f2;
             color: #000000;
         }
 
         header,
         footer {
-            background-color: #a1a1a1;
+            background-color: #f2f2f2;
             color: #000000;
             text-align: center;
             padding: 1em 0;
@@ -25,7 +25,7 @@
         #radarCanvas {
             display: block;
             margin: 2em auto;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+            /* box-shadow: 0 0 10px rgba(0, 0, 0, 0.5); */
         }
 
         section {
@@ -44,7 +44,7 @@
 
 <body>
     <header>
-        <h1>WEMars 2023</h1>
+        <h1>WE Mars LiDAR Graph</h1>
     </header>
 
     <canvas id="radarCanvas" width="1200" height="600"></canvas>
@@ -72,7 +72,7 @@
             ctx.translate(centerX, centerY); // Move the origin to the center of the canvas
 
             // Draw the circles
-            ctx.strokeStyle = 'purple';
+            ctx.strokeStyle = 'black';
             ctx.lineWidth = 2;
             for (let i = 1; i <= 5; i++) {
                 ctx.beginPath();
@@ -100,11 +100,14 @@
             }
 
             const ctx = canvas.getContext('2d');
-            ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear the canvas before redrawing
-            drawRadarGrid(ctx, canvas); // Redraw the radar grid
+            // ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear the canvas before redrawing
+            // drawRadarGrid(ctx, canvas); // Redraw the radar grid
 
             // Validate and plot new data
             for (const [deg, dist] of Object.entries(dataDict)) {
+                if (dist == 0) {
+                    continue;
+                }
                 // if (typeof dist !== 'number' || typeof deg !== 'number') {
                 //     console.log(typeof(dist));
                 //     console.error('Invalid data received:', { degree: deg, distance: dist });

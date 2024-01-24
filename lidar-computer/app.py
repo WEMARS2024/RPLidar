@@ -90,6 +90,8 @@ def send_sensor_data():
                         print("Refused connection")
                         continue
                     print(f"Received data from server: {received_data}")
+
+                    data = [1,2,1,1,1,2,1,1,1,23,3,4,]
                     
                     try:
                         data_pairs = received_data.split(';')
@@ -107,7 +109,7 @@ def send_sensor_data():
                         print(data_dict)
                         dictLength = len(data_dict)
                         print(f'length of dict: {dictLength}')
-                        if (dictLength > 100):
+                        if (dictLength > 0):
                             socketio.emit('sensor-data', data_dict)
                         socketio.sleep(1)  # Use socketio.sleep instead of time.sleep
                     except ValueError:
