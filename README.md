@@ -15,11 +15,11 @@ we ball. opioids.
 ### physical
 - [x] get lidar rotating
 - [x] get lidar sending data
-- [ ] get lidar sending formatted data
+- [x] get lidar sending formatted data
 - [ ] get lidar responding to commands
 
 ### visual
-- [ ] get some sort of front end visualizing data working
+- [x] get some sort of front end visualizing data working
 - [ ] move front end to react
 - [ ] migrate to we mars pi
 - [ ] get milk, eggs and peanut butter
