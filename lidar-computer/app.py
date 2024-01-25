@@ -62,22 +62,27 @@ def send_sensor_data():
     with app.app_context():
         debug = 1
         while True:
-            if debug == 0:
+            if debug == 1:
                 # DEBUG
-                data_dict = {}
-                for x in range(0,360,30):
-                    data_dict[x+90] = np.random.uniform(0,12)
-                socketio.emit('sensor-data', data_dict)
-                socketio.sleep(2)
-            elif debug == 1:
+                for i in range(10):
+                    s = f"{90},"
+                    for j in range(90):
+                        s = s+f", {1+i/2}"
+                    socketio.emit('sensor-data', s)
+                    print("emtited")
+                    socketio.sleep(2)
+            elif debug == 0:
                 # Set up the server socket
                 server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                host = '172.20.10.2' # wireless LAN adapter
+                host = '172.30.120.250' # wireless LAN adapter
                 port = 8080
 
-                server_socket.bind((host, port))
-                server_socket.listen(1)
-                print(f"Server listening on {host}:{port}")
+                try:
+                    server_socket.bind((host, port))
+                    server_socket.listen(1)
+                    print(f"Server listening on {host}:{port}")
+                except:
+                    print("wrong")
 
                 while True:
                     # Accept a client connection
@@ -89,28 +94,23 @@ def send_sensor_data():
                     if not received_data:
                         print("Refused connection")
                         continue
-                    print(f"Received data from server: {received_data}")
+                    # print(f"Received data from server: {received_data}")
 
-                    data = [1,2,1,1,1,2,1,1,1,23,3,4,]
+                    # data = [0] * 360
                     
                     try:
-                        data_pairs = received_data.split(';')
-                        data_dict = {}
+                        # dataPts = received_data.split(',')
+                        # print(dataPts)
+                        # pos = int(dataPts[0])
+                        # dataPts.pop(0)
 
-                        for pair in data_pairs:
-                            if ':' in pair:
-                                deg, dist = pair.split(':')
-                                try:
-                                    deg = float(deg)
-                                    dist = float(dist)
-                                    data_dict[deg] = dist
-                                except ValueError:
-                                    print(f"Invalid data pair: {pair}")
-                        print(data_dict)
-                        dictLength = len(data_dict)
-                        print(f'length of dict: {dictLength}')
-                        if (dictLength > 0):
-                            socketio.emit('sensor-data', data_dict)
+                        # for i in range(len(dataPts)):
+                        #     try:
+                        #         data[(i+pos)%360] = dataPts[i]
+                        #     except ValueError:
+                        #         print(f"Invalid data pair: {dataPts[i]}")
+                        print(received_data)
+                        socketio.emit('sensor-data', received_data)
                         socketio.sleep(1)  # Use socketio.sleep instead of time.sleep
                     except ValueError:
                         print("Error parsing data:", received_data)

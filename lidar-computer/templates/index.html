@@ -57,9 +57,27 @@
         // JavaScript code that connects to the server via Socket.io
         // and handles incoming data for the radar display 
         var socket = io.connect('http://' + document.domain + ':' + location.port);
-        socket.on('sensor-data', function (data) {
-            console.log(data); // Data received from server should show up in the browser's console
-            updateRadarDisplay(data);
+        var data = new Array(360)
+
+        socket.on('sensor-data', function (rData) {
+            // Data received from server should show up in the browser's console
+            console.log(rData); 
+
+            // parse into array
+            var dataArray = rData.split(',').slice(0).map(Number);
+            // record first element as the starting degree
+            var pos = dataArray[0] - 90
+            // remove first element
+            var formattedData = dataArray.slice(1)
+            console.log("data array: ", formattedData)
+
+            // go through all elements in d and save to data
+            for (let i = 0; i < 90; i++) {
+                data[i+pos] = formattedData[i]
+            }
+
+            console.log(data)
+            updateRadarDisplay();
         });
 
         function drawRadarGrid(ctx, canvas) {
@@ -92,7 +110,7 @@
             ctx.restore(); // Restore the original state
         }
 
-        function updateRadarDisplay(dataDict) {
+        function updateRadarDisplay() {
             const canvas = document.getElementById('radarCanvas');
             if (!canvas) {
                 console.error('No canvas element found');
@@ -100,25 +118,20 @@
             }
 
             const ctx = canvas.getContext('2d');
-            // ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear the canvas before redrawing
-            // drawRadarGrid(ctx, canvas); // Redraw the radar grid
+            ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear the canvas before redrawing
+            drawRadarGrid(ctx, canvas); // Redraw the radar grid
 
             // Validate and plot new data
-            for (const [deg, dist] of Object.entries(dataDict)) {
-                if (dist == 0) {
+            for (let i = 0; i < 360; i++) {
+                if (data[i] == 0) {
                     continue;
                 }
-                // if (typeof dist !== 'number' || typeof deg !== 'number') {
-                //     console.log(typeof(dist));
-                //     console.error('Invalid data received:', { degree: deg, distance: dist });
-                //     continue;
-                // }
 
                 // Logic to calculate position and draw a point based on the received data
-                const angleInRadians = (deg * Math.PI) / 180;
+                const angleInRadians = (i * Math.PI) / 180;
                 // const distanceScale = Math.min(canvas.width, canvas.height) / 2 / 100; // Adjust scale as needed
-                const x = (canvas.width / 2) + dist * 25 * Math.cos(angleInRadians);
-                const y = (canvas.height / 2) - dist * 25 * Math.sin(angleInRadians);
+                const x = (canvas.width / 2) + data[i] * 25 * Math.cos(angleInRadians);
+                const y = (canvas.height / 2) - data[i] * 25 * Math.sin(angleInRadians);
 
                 // Draw a point at the calculated (x, y) position
                 ctx.fillStyle = 'red';

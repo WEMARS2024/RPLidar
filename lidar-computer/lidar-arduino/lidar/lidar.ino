@@ -1,11 +1,10 @@
-
 #include <RPLidar.h>
 #include <HardwareSerial.h>
 #include "esp32-hal-ledc.h"
-#define DEBUG 1
+#define DEBUG 0
 
 #if !DEBUG
-  #include <WiFi.h>  // Include the WiFi library for ESP32
+#include <WiFi.h>  // Include the WiFi library for ESP32
 #endif
 
 #define LEDC_CHANNEL 0
@@ -23,10 +22,10 @@ unsigned long currentTime = millis();
 
 
 // Network credentials and server details
-const char* ssid = "Howard"; // Replace with your WiFi network's SSID
-const char* password = "howardiscool"; // Replace with your WiFi network's password
-const char* host = "172.20.10.2"; // Replace with your server's IP address
-const uint16_t port = 8080; // The port on which your server is listening
+const char* ssid = "Howard";            // Replace with your WiFi network's SSID
+const char* password = "howardiscool";  // Replace with your WiFi network's password
+const char* host = "172.30.125.32";     // Replace with your server's IP address
+const uint16_t port = 8080;             // The port on which your server is listening
 
 void setup() {
   ledcSetup(LEDC_CHANNEL, LEDC_FREQUENCY, LEDC_RESOLUTION);
@@ -34,9 +33,9 @@ void setup() {
   ledcWrite(LEDC_CHANNEL, dutyCycle);
 
   Serial.begin(115200);
-  
+
   // don't start motor until command
-  while(Serial.available() > 0) {
+  while (Serial.available() > 0) {
     if (Serial.read() == 'o') {
       Serial2.begin(115200, SERIAL_8N1, RXD2, TXD2);
       lidar.begin(Serial2);
@@ -44,29 +43,51 @@ void setup() {
       delay(2000);
       Serial.println("Setup complete, entering main loop...");
 
-      #if !DEBUG
-        WiFi.mode(WIFI_STA);
-        WiFi.begin(ssid, password);
-      
-        while (WiFi.status() != WL_CONNECTED) {
-          delay(1000);
-          Serial.println("Connecting to WiFi...");
-          
+#if !DEBUG
+      WiFi.mode(WIFI_STA);
+      Serial.println("scan start");
+
+      // WiFi.scanNetworks will return the number of networks found
+      int n = WiFi.scanNetworks();
+      Serial.println("scan done");
+      if (n == 0) {
+        Serial.println("no networks found");
+      } else {
+        Serial.print(n);
+        Serial.println(" networks found");
+        for (int i = 0; i < n; ++i) {
+          // Print SSID and RSSI for each network found
+          Serial.print(i + 1);
+          Serial.print(": ");
+          Serial.print(WiFi.SSID(i));
+          Serial.print(" (");
+          Serial.println(WiFi.RSSI(i));
+          delay(10);
         }
-        Serial.println("Connected to WiFi");
-      #endif
+      }
+
+      WiFi.begin(ssid, password);
+      Serial.print("Connecting to WiFi...");
+
+      while (WiFi.status() != WL_CONNECTED) {
+        WiFi.begin(ssid, password);
+        delay(1000);
+        Serial.print(WiFi.status());
+      }
+      Serial.println("Connected to WiFi");
+#endif
     }
   }
 }
 
 // Declare the scanData array globally
-int scanData[360]; 
+int scanData[360];
 int datumRecorded = 0;
 
 void loop() {
   if (IS_OK(lidar.waitPoint())) {
     float distance = lidar.getCurrentPoint().distance / 1000;
-    int angle = int(lidar.getCurrentPoint().angle)-1 ; // Adjust angle to 0-359
+    int angle = int(lidar.getCurrentPoint().angle) - 1;  // Adjust angle to 0-359
 
     // set scanData distance to corresponding angle
     scanData[angle] = distance;
@@ -75,9 +96,9 @@ void loop() {
 
     // if datumRecorded is 90, 180, 270, or 360, send data
     if (datumRecorded % 90 == 0) {
-      #if !DEBUG
+#if !DEBUG
       sendDataToServer(scanData, datumRecorded);
-      #endif
+#endif
       // Serial.println("Data sent!");
       // Serial.println(String(datumRecorded) + "th data point: " + String(scanData[angle]));
     }
@@ -85,15 +106,14 @@ void loop() {
     // if datumRecorded is 360, reset counter
     if (datumRecorded >= 360) {
       datumRecorded = 0;
-    } 
+    }
 
     // if user enters 'r', will print data
-    if (Serial.read() == 'r'){
-      String printout = String(angle) + "deg : " + String(distance) +"m";
+    if (Serial.read() == 'r') {
+      String printout = String(angle) + "deg : " + String(distance) + "m";
       Serial.println(printout);
-    }
-    else if (Serial.read() == 'c') {
-      Serial.println("ending...")
+    } else if (Serial.read() == 'c') {
+      Serial.println("ending...");
       lidar.end();
     }
 
@@ -112,22 +132,24 @@ void loop() {
 
 #if !DEBUG
 void sendDataToServer(int data[360], int datumRecorded) {
+  WiFiClient client;
   if (!client.connect(host, port)) {
-   WiFiClient client;
     Serial.println("Connection to server failed");
     return;
   }
 
   // declare string variable for data sent
-  String sData = "";
+  String sData = String(datumRecorded);
 
   // parse data into string
-  for (int i = datumRecorded; i < datumRecorded+90; i++) {
-    sData = sData + data[i];
+  for (int i = datumRecorded; i < datumRecorded + 90; i++) {
+    sData = sData + "," + data[i];
   }
 
+  Serial.println(sData);
+
   // send to front end
-  client.print(data);
+  client.print(sData);
   client.stop();
- }
+}
 #endif
